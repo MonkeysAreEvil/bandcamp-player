@@ -31,7 +31,15 @@ class Album(object):
         results = soup.find('table', attrs={'id': 'track_table'}).find_all('a')
         results = [item.attrs['href'] for item in results if item.has_attr('href')]
         results = [item for item in results if '#lyrics' not in item]
-        return [self.url[:self.url.find('/album')] + item for item in results]
+        results = [item for item in results if '?action=download' not in item]
+        ordered_tracks = set()
+        tracks = []
+        for item in results:
+            if item in ordered_tracks:
+                tracks.append(self.url[:self.url.find('/album')] + item)
+            else:
+                ordered_tracks.add(item)
+        return tracks
 
     def track_random(self) -> str:
         """ :returns: link to random track """

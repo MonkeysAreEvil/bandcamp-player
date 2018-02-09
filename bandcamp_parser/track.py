@@ -20,6 +20,8 @@ class Track(object):
         data = Request.get(self.url).content
         soup = BeautifulSoup(data, "html.parser")
         track_meta = json.loads(BandcampJSON(soup).generate()[0])
+        if track_meta['trackinfo'][0]['file'] is None:
+            raise ValueError("could not find mp3 in %s" % self.url)
         return "https:" + track_meta['trackinfo'][0]['file']['mp3-128']
 
     def save(self) -> None:
