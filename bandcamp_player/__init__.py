@@ -1,6 +1,7 @@
 # coding=utf-8
 import logging
 import sys
+import argparse
 
 from bandcamp_parser.album import Album
 from bandcamp_parser.tag import Tag
@@ -10,42 +11,37 @@ logging.basicConfig(level=logging.INFO)
 
 
 def loop():
-    usage = ("usage: bandcamp_player [-h | --help] --tag TAG | --track TRACK_URL | --album ALBUM_URL\n"
-             "\n"
-             "Plays a track, an album, or random tracks from a tag, from Bandcamp.\n"
-             "\n"
-             "Required arguments:\n"
-             " any of --tag, --track, --album\n"
-             "\n"
-             "Optional arguments:\n"
-             " -h, --help        show this help message and exit\n")
+    parser = argparse.ArgumentParser(description="Plays a track, an album, or random tracks from a tag, from Bandcamp.")
+    parser.add_argument("--version", action="version", version="'%(prog)s 0.2.1'")
+    any_of_required = parser.add_mutually_exclusive_group(required=True)
+    any_of_required.add_argument("--album", help="plays an album")
+    any_of_required.add_argument("--tag", help="plays random tracks with tag")
+    any_of_required.add_argument("--track", help="plays a track")
 
-    if len(sys.argv) < 2 or len(sys.argv) > 3:
-        print(usage)
-        exit(0)
+    args = vars(parser.parse_args())
 
-    if sys.argv[1] == "--track":
-        track = Track(sys.argv[2])
-        track.play()
-    elif sys.argv[1] == "--tag":
-        tag_data = Tag(sys.argv[2])
+    album_url = args["album"]
+    tag_url = args["tag"]
+    track_url = args["track"]
+
+    if album_url:
+        album = Album(album_url)
+        for track_url in album.tracks():
+            track = Track(track_url)
+            track.play()
+
+    if tag_url:
+        tag = Tag(sys.argv[2])
         while True:
-            album_url = tag_data.album_random().href
+            album_url = tag.album_random().href
             album = Album(album_url)
             track_url = album.track_random()
             track = Track(track_url)
             track.play()
-    elif sys.argv[1] == "--album":
-        album = Album(sys.argv[2])
-        for track_url in album.tracks():
-            track = Track(track_url)
-            track.play()
-    elif sys.argv[1] == "-h" or sys.argv[1] == "--help":
-        print(usage)
-        exit(0)
-    else:
-        print(usage)
-        exit(0)
+
+    if track_url:
+        track = Track(track_url)
+        track.play()
 
 
 def main():
